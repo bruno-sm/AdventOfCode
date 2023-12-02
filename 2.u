@@ -1,0 +1,43 @@
+{-
+--- Day 2: Cube Conundrum ---
+
+-}
+
+example_input = """
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+"""
+> example_input
+
+NatFromText! = Nat.fromText >> getOrBug "no Nat"
+--parse_input : Text -> [[[Nat]]]
+to_rgb_array = cases
+    [] -> [0, 0, 0]
+    [n, "red"] +: t -> to_rgb_array t |> replace 0 (NatFromText! n)
+    [n, "green"] +: t -> to_rgb_array t |> replace 1 (NatFromText! n)
+    [n, "blue"] +: t -> to_rgb_array t |> replace 2 (NatFromText! n)
+    x -> bug x
+parse_input = (Text.split ?\n
+               >> map (Text.dropUntil (c -> c == ?:)
+                       >> Text.split ?;
+                       >> map (Text.split ?,
+                               >> map (trim >> Text.split ? )
+                               >> to_rgb_array
+                                )
+                        )
+                )
+> parse_input example_input
+
+--possible : [Nat] -> [Nat] -> Boolean
+possible hypotesis = List.zip hypotesis >> List.map (x -> (at1 x) Nat.>= (at2 x)) >> List.foldLeft and true
+problem1 hypotesis = List.indexed >> filter (Tuple.at1 >> map (possible hypotesis) >> List.foldLeft and true) >> map (x -> at2 x + 1) >> sum
+> parse_input example_input |> (problem1 [12, 13, 14])
+
+problem2 = List.map (transpose >> map (foldLeft Nat.max 0) >> foldLeft (*) 1) >> sum
+> parse_input example_input |> problem2
+
+solution1 = do open (FilePath "2.input") Read |> getText |> parse_input |> (problem1 [12, 13, 14])
+solution2 = do open (FilePath "2.input") Read |> getText |> parse_input |> problem2
